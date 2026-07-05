@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import csv
+import io
 import json
 import subprocess
 import sys
@@ -104,6 +106,43 @@ class TestFilterEvents(unittest.TestCase):
         self.assertEqual(result, [])
 
 
+class TestRenderFormats(unittest.TestCase):
+    def setUp(self):
+        self.events = sysmon_parser.parse_file(SAMPLES_DIR / "multi_events.xml")
+
+    def test_render_json_array_for_multiple_events(self):
+        output = sysmon_parser.render_json(self.events)
+        data = json.loads(output)
+        self.assertIsInstance(data, list)
+        self.assertEqual(len(data), 3)
+
+    def test_render_json_object_for_single_event(self):
+        output = sysmon_parser.render_json(self.events[:1])
+        data = json.loads(output)
+        self.assertIsInstance(data, dict)
+
+    def test_render_jsonl_one_object_per_line(self):
+        output = sysmon_parser.render_jsonl(self.events)
+        lines = output.splitlines()
+        self.assertEqual(len(lines), 3)
+        for line, event in zip(lines, self.events):
+            self.assertEqual(json.loads(line), event)
+
+    def test_render_csv_has_header_and_rows(self):
+        output = sysmon_parser.render_csv(self.events)
+        rows = list(csv.DictReader(io.StringIO(output)))
+
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0]["Image"], "C:\\Windows\\System32\\whoami.exe")
+        self.assertEqual(rows[0]["User"], "CORP\\jsmith")
+        self.assertIn("-Enc", rows[2]["CommandLine"])
+
+    def test_render_csv_empty_events_has_header_only(self):
+        output = sysmon_parser.render_csv([])
+        rows = list(csv.DictReader(io.StringIO(output)))
+        self.assertEqual(rows, [])
+
+
 class TestCli(unittest.TestCase):
     def run_cli(self, *args):
         return subprocess.run(
@@ -144,6 +183,40 @@ class TestCli(unittest.TestCase):
         proc = self.run_cli(
             str(SAMPLES_DIR / "event1.xml"), "--integrity-level", "Bogus"
         )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("invalid choice", proc.stderr)
+
+    def test_format_json_is_default(self):
+        default_proc = self.run_cli(str(SAMPLES_DIR / "multi_events.xml"))
+        explicit_proc = self.run_cli(str(SAMPLES_DIR / "multi_events.xml"), "--format", "json")
+        self.assertEqual(default_proc.stdout, explicit_proc.stdout)
+
+    def test_format_jsonl_outputs_one_line_per_event(self):
+        proc = self.run_cli(str(SAMPLES_DIR / "multi_events.xml"), "--format", "jsonl")
+        self.assertEqual(proc.returncode, 0)
+        lines = proc.stdout.strip("\n").splitlines()
+        self.assertEqual(len(lines), 3)
+        for line in lines:
+            self.assertIsInstance(json.loads(line), dict)
+
+    def test_format_csv_outputs_header_and_rows(self):
+        proc = self.run_cli(str(SAMPLES_DIR / "multi_events.xml"), "--format", "csv")
+        self.assertEqual(proc.returncode, 0)
+        rows = list(csv.DictReader(io.StringIO(proc.stdout)))
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0]["User"], "CORP\\jsmith")
+
+    def test_format_with_filter_applies_before_rendering(self):
+        proc = self.run_cli(
+            str(SAMPLES_DIR / "multi_events.xml"), "--format", "jsonl", "--user", "CORP\\bwilson"
+        )
+        self.assertEqual(proc.returncode, 0)
+        lines = proc.stdout.strip("\n").splitlines()
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(json.loads(lines[0])["User"], "CORP\\bwilson")
+
+    def test_invalid_format_choice_errors(self):
+        proc = self.run_cli(str(SAMPLES_DIR / "event1.xml"), "--format", "xml")
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("invalid choice", proc.stderr)
 

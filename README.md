@@ -42,6 +42,21 @@ See `samples/` for examples of both.
 python parser.py samples/event1.xml -o output.json
 ```
 
+### Output format
+
+`--format` controls the output shape:
+
+| Format | Description |
+|---|---|
+| `json` (default) | JSON object if exactly one event matches, otherwise a JSON array |
+| `jsonl` | One JSON object per line, no collapsing — useful for streaming/piping |
+| `csv` | CSV with a header row |
+
+```
+python parser.py samples/multi_events.xml --format jsonl
+python parser.py samples/multi_events.xml --format csv
+```
+
 ### Filtering
 
 Filters can be combined; an event must match every filter supplied (AND logic). If no events match, the output is an empty JSON array (`[]`).
