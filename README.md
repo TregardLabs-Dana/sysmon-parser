@@ -67,3 +67,9 @@ Note: if a filter value itself starts with `-` (e.g. `-enc`), use `--flag=value`
 - `samples/event2.xml` — `cmd.exe` spawning `powershell.exe`
 - `samples/event3.xml` — a macro-enabled document (`WINWORD.EXE`) spawning `powershell.exe` with an encoded (`-enc`) command
 - `samples/multi_events.xml` — all three events combined under a single `<Events>` root, for testing batch parsing
+
+## Tests
+
+```
+python -m unittest test_parser -v
+```
