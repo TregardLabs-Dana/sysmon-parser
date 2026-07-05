@@ -143,6 +143,46 @@ class TestRenderFormats(unittest.TestCase):
         self.assertEqual(rows, [])
 
 
+class TestComputeStats(unittest.TestCase):
+    def setUp(self):
+        self.events = sysmon_parser.parse_file(SAMPLES_DIR / "multi_events.xml")
+
+    def test_stats_over_all_events(self):
+        stats = sysmon_parser.compute_stats(self.events)
+
+        self.assertEqual(stats["total_events"], 3)
+        self.assertEqual(
+            stats["unique_processes"],
+            [
+                "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                "C:\\Windows\\System32\\whoami.exe",
+            ],
+        )
+        self.assertEqual(stats["unique_users"], ["CORP\\bwilson", "CORP\\jsmith"])
+        self.assertEqual(stats["events_by_integrity_level"], {"Medium": 3})
+
+    def test_stats_over_filtered_subset(self):
+        filtered = sysmon_parser.filter_events(self.events, image="powershell")
+        stats = sysmon_parser.compute_stats(filtered)
+
+        self.assertEqual(stats["total_events"], 2)
+        self.assertEqual(len(stats["unique_processes"]), 1)
+
+    def test_stats_on_empty_events(self):
+        stats = sysmon_parser.compute_stats([])
+
+        self.assertEqual(stats["total_events"], 0)
+        self.assertEqual(stats["unique_processes"], [])
+        self.assertEqual(stats["unique_users"], [])
+        self.assertEqual(stats["events_by_integrity_level"], {})
+
+    def test_stats_counts_missing_integrity_level_as_unknown(self):
+        event_elem = ET.fromstring(MINIMAL_EVENT_XML)
+        stats = sysmon_parser.compute_stats([sysmon_parser.parse_event(event_elem)])
+
+        self.assertEqual(stats["events_by_integrity_level"], {"Unknown": 1})
+
+
 class TestCli(unittest.TestCase):
     def run_cli(self, *args):
         return subprocess.run(
@@ -219,6 +259,23 @@ class TestCli(unittest.TestCase):
         proc = self.run_cli(str(SAMPLES_DIR / "event1.xml"), "--format", "xml")
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("invalid choice", proc.stderr)
+
+    def test_stats_outputs_summary_object(self):
+        proc = self.run_cli(str(SAMPLES_DIR / "multi_events.xml"), "--stats")
+        self.assertEqual(proc.returncode, 0)
+        data = json.loads(proc.stdout)
+        self.assertEqual(data["total_events"], 3)
+        self.assertEqual(len(data["unique_processes"]), 2)
+        self.assertEqual(len(data["unique_users"]), 2)
+        self.assertEqual(data["events_by_integrity_level"], {"Medium": 3})
+
+    def test_stats_respects_filters(self):
+        proc = self.run_cli(
+            str(SAMPLES_DIR / "multi_events.xml"), "--stats", "--image", "powershell"
+        )
+        self.assertEqual(proc.returncode, 0)
+        data = json.loads(proc.stdout)
+        self.assertEqual(data["total_events"], 2)
 
 
 if __name__ == "__main__":

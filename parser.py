@@ -5,6 +5,7 @@ import io
 import json
 import sys
 import xml.etree.ElementTree as ET
+from collections import Counter
 
 NS = {"e": "http://schemas.microsoft.com/win/2004/08/events/event"}
 
@@ -83,6 +84,20 @@ def render_csv(events):
 RENDERERS = {"json": render_json, "jsonl": render_jsonl, "csv": render_csv}
 
 
+# This stats feature is for quick triage to understand what's in a file before deep analysis
+def compute_stats(events):
+    images = sorted({event["Image"] for event in events if event.get("Image")})
+    users = sorted({event["User"] for event in events if event.get("User")})
+    integrity_counts = Counter(event.get("IntegrityLevel") or "Unknown" for event in events)
+
+    return {
+        "total_events": len(events),
+        "unique_processes": images,
+        "unique_users": users,
+        "events_by_integrity_level": dict(integrity_counts),
+    }
+
+
 def main():
     argparser = argparse.ArgumentParser(description="Parse a Sysmon Event ID 1 XML file into JSON.")
     argparser.add_argument("xml_path", help="Path to the Sysmon XML file")
@@ -101,6 +116,11 @@ def main():
         help="Filter: IntegrityLevel exact match",
     )
     argparser.add_argument("--command-line", help="Filter: CommandLine contains this substring (case-insensitive)")
+    argparser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Output summary statistics (total events, unique processes/users, counts by IntegrityLevel) instead of the events themselves",
+    )
     args = argparser.parse_args()
 
     events = parse_file(args.xml_path)
@@ -111,7 +131,10 @@ def main():
         integrity_level=args.integrity_level,
         command_line=args.command_line,
     )
-    output_str = RENDERERS[args.format](events)
+    if args.stats:
+        output_str = json.dumps(compute_stats(events), indent=2)
+    else:
+        output_str = RENDERERS[args.format](events)
 
     if args.output:
         with open(args.output, "w") as f:

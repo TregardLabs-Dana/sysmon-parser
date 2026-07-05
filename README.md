@@ -76,6 +76,17 @@ python parser.py samples/multi_events.xml --command-line=-enc
 
 Note: if a filter value itself starts with `-` (e.g. `-enc`), use `--flag=value` syntax so it isn't parsed as another option.
 
+### Stats / triage
+
+`--stats` outputs summary statistics instead of the events themselves — useful for a quick sense of what's in a file before deep analysis. It's computed over whatever set of events remains after filters are applied.
+
+```
+python parser.py samples/multi_events.xml --stats
+python parser.py samples/multi_events.xml --stats --image powershell
+```
+
+Outputs `total_events`, `unique_processes` (sorted `Image` values), `unique_users` (sorted `User` values), and `events_by_integrity_level` (a count per level).
+
 ## Samples
 
 - `samples/event1.xml` — `whoami.exe /all` spawned from `cmd.exe`
