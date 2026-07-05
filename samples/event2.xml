@@ -1,0 +1,43 @@
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon" Guid="{5770385f-c22a-43e0-bf4c-06f5698ffbd9}"/>
+    <EventID>1</EventID>
+    <Version>5</Version>
+    <Level>4</Level>
+    <Task>1</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x8000000000000000</Keywords>
+    <TimeCreated SystemTime="2026-07-05T13:58:15.2090000Z"/>
+    <EventRecordID>1048305</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID="3812" ThreadID="4020"/>
+    <Channel>Microsoft-Windows-Sysmon/Operational</Channel>
+    <Computer>WKSTN-042.corp.local</Computer>
+    <Security UserID="S-1-5-18"/>
+  </System>
+  <EventData>
+    <Data Name="RuleName">-</Data>
+    <Data Name="UtcTime">2026-07-05 13:58:15.209</Data>
+    <Data Name="ProcessGuid">{df00ea8d-045d-4c13-8a59-31c5abfc2d5c}</Data>
+    <Data Name="ProcessId">9184</Data>
+    <Data Name="Image">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Data>
+    <Data Name="FileVersion">10.0.19041.1023 (WinBuild.160101.0800)</Data>
+    <Data Name="Description">Windows PowerShell</Data>
+    <Data Name="Product">Microsoft&#174; Windows&#174; Operating System</Data>
+    <Data Name="Company">Microsoft Corporation</Data>
+    <Data Name="OriginalFileName">PowerShell.EXE</Data>
+    <Data Name="CommandLine">powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-Process"</Data>
+    <Data Name="CurrentDirectory">C:\Users\jsmith\</Data>
+    <Data Name="User">CORP\jsmith</Data>
+    <Data Name="LogonGuid">{cf8e1100-ea25-41bd-a8e6-d10b90018ab0}</Data>
+    <Data Name="LogonId">0x3E7A21</Data>
+    <Data Name="TerminalSessionId">2</Data>
+    <Data Name="IntegrityLevel">Medium</Data>
+    <Data Name="Hashes">MD5=44D88612FEA8A8F36DE82E1278ABB02F,SHA256=2C26B46B68FFC68FF99B453C1D30413413422D706483BFA0F98A5E886266E7A</Data>
+    <Data Name="ParentProcessGuid">{6591b15f-fe2a-436f-b592-9e5af341bc10}</Data>
+    <Data Name="ParentProcessId">5544</Data>
+    <Data Name="ParentImage">C:\Windows\System32\cmd.exe</Data>
+    <Data Name="ParentCommandLine">"C:\Windows\System32\cmd.exe"</Data>
+    <Data Name="ParentUser">CORP\jsmith</Data>
+  </EventData>
+</Event>
